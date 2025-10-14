@@ -17,11 +17,14 @@ const registerUser = async (req, res) => {
     }
 
     // create user
-    const createdUser = await User.create({
+    const user = await User.create({
       name,
       email,
       password,
     });
+
+    // remove password
+    const createdUser = await User.findById(user._id).select("-password");
 
     // check for user creation
     if (!createdUser) {
