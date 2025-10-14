@@ -1,4 +1,25 @@
+import { USER_COOKIE_EXPIRY } from "../constants.js";
 import { User } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
+
+const generateAccessTokenAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    res.status(500).json({
+      message:
+        error.message ||
+        "Something went wrong while generating access and refresh Token.",
+    });
+  }
+};
 
 // user registration
 const registerUser = async (req, res) => {
@@ -24,7 +45,9 @@ const registerUser = async (req, res) => {
     });
 
     // remove password
-    const createdUser = await User.findById(user._id).select("-password");
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
 
     // check for user creation
     if (!createdUser) {
@@ -67,15 +90,100 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid user credentials" });
     }
 
-    const loggedInUser = await User.findById(user._id).select("-password");
+    const { accessToken, refreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id);
 
-    return res.status(200).json({
-      loggedInUser,
-      message: "Login successfull.",
-    });
+    const loggedInUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      maxAge: USER_COOKIE_EXPIRY,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json({
+        user: loggedInUser,
+        accessToken,
+        refreshToken,
+        message: "Login successfull.",
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export { registerUser, loginUser };
+// user logout
+const logoutUser = async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: "",
+      },
+    },
+    { new: true }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json({ message: "User Logged Out." });
+};
+
+// refreshAccessToken
+const refreshAccessToken = async (req, res) => {
+  const incomingRefreshToken = req.cookies?.refreshToken;
+
+  if (!incomingRefreshToken) {
+    res.status(401).json({ message: "Unautorized request" });
+  }
+
+  const decodedToken = jwt.verify(
+    incomingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+
+  const user = await User.findById(decodedToken._id);
+
+  if (!user) {
+    res.status(401).json({ message: "Invalid Refresh Token" });
+  }
+
+  if (incomingRefreshToken != user.refreshToken) {
+    res.status(401).json({ message: "Refreshed token is expired or used" });
+  }
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newRefreshToken, options)
+    .json({
+      accessToken,
+      refreshToken: newRefreshToken,
+      message: "Access token refreshed",
+    });
+};
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };

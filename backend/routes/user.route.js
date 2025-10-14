@@ -1,7 +1,13 @@
 import { Router } from "express";
-import { loginUser, registerUser } from "../controllers/user.controller.js";
+import {
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+} from "../controllers/user.controller.js";
 import { validate } from "../validator/validate.js";
 import { body } from "express-validator";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -32,5 +38,11 @@ router
     validate,
     loginUser
   );
+
+// logout route
+router.route("/logout").post(verifyJWT, logoutUser);
+
+// refresh token
+router.route("/refresh-token").post(refreshAccessToken);
 
 export default router;
