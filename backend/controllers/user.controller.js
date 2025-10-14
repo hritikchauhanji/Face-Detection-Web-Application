@@ -42,4 +42,40 @@ const registerUser = async (req, res) => {
   }
 };
 
-export { registerUser };
+// user login
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // if email is required
+    if (!email) {
+      return res.status(400).json({ message: "email is required" });
+    }
+
+    // find user
+    const user = await User.findOne({ email });
+
+    // find user is not exist
+    if (!user) {
+      return res.status(404).json({ message: "User is not exist" });
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+
+    // check password valid
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid user credentials" });
+    }
+
+    const loggedInUser = await User.findById(user._id).select("-password");
+
+    return res.status(200).json({
+      loggedInUser,
+      message: "Login successfull.",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { registerUser, loginUser };

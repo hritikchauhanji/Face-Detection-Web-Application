@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, registerUser } from "../controllers/user.controller.js";
 import { validate } from "../validator/validate.js";
 import { body } from "express-validator";
 
 const router = Router();
 
+// register route
 router.route("/register").post(
   [
     body("name")
@@ -22,5 +23,14 @@ router.route("/register").post(
   validate,
   registerUser
 );
+
+// login route
+router
+  .route("/login")
+  .post(
+    [body("email").isEmail().withMessage("Email format: abcd@example.com")],
+    validate,
+    loginUser
+  );
 
 export default router;
