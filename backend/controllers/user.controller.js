@@ -1,7 +1,7 @@
 import { User } from "../models/user.model.js";
 
 // user registration
-const registerUser = async (res, req) => {
+const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
