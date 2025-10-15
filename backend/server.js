@@ -2,6 +2,7 @@ import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import express from "express";
 import userRouter from "./routes/user.route.js";
+import faceRouter from "./routes/face.route.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/v1/auth", userRouter);
+app.use("/api/v1/face", faceRouter);
 
 // Server
 const PORT = process.env.PORT || 3000;
