@@ -4,6 +4,7 @@ import { body } from "express-validator";
 import { validate } from "../validator/validate.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
+  deleteImage,
   getUploadHistory,
   uploadImage,
 } from "../controllers/face.controller.js";
@@ -33,5 +34,8 @@ router
 
 // Get user's uploaded image history
 router.route("/history").get(verifyJWT, getUploadHistory);
+
+// Delete image by ID
+router.route("/delete/:imageId").delete(verifyJWT, deleteImage);
 
 export default router;

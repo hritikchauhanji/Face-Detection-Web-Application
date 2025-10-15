@@ -1,7 +1,10 @@
 // controllers/upload.controller.js
 import { User } from "../models/user.model.js";
 import { ImageHistory } from "../models/imageHistory.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 // Upload Image and save to ImageHistory
 const uploadImage = async (req, res) => {
@@ -65,4 +68,32 @@ const getUploadHistory = async (req, res) => {
   }
 };
 
-export { uploadImage, getUploadHistory };
+// Delete an image by ID
+const deleteImage = async (req, res) => {
+  try {
+    const { imageId } = req.params;
+
+    // Find the image record
+    const imageRecord = await ImageHistory.findOne({
+      _id: imageId,
+      user: req.user._id,
+    });
+    if (!imageRecord) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    // Delete from Cloudinary
+    if (imageRecord.publicId) {
+      await deleteFromCloudinary(imageRecord.publicId);
+    }
+
+    // Delete from MongoDB
+    await ImageHistory.deleteOne({ _id: imageId });
+
+    res.status(200).json({ message: "Image deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { uploadImage, getUploadHistory, deleteImage };
