@@ -12,22 +12,31 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
+const validateUpload = [
+  body("detectionData")
+    .optional()
+    .custom((value) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) throw new Error();
+        return true;
+      } catch {
+        throw new Error("detectionData must be a valid JSON array");
+      }
+    }),
+  body("facesDetected")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("facesDetected must be a non-negative integer"),
+];
+
 // Save face detection metadata
 router
   .route("/upload")
   .post(
     verifyJWT,
     upload.single("image"),
-    [
-      body("facesDetected")
-        .optional()
-        .isInt({ min: 0 })
-        .withMessage("facesDetected must be a number"),
-      body("detectionData")
-        .optional()
-        .isArray()
-        .withMessage("detectionData must be an array"),
-    ],
+    validateUpload,
     validate,
     uploadImage
   );

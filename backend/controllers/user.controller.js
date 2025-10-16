@@ -104,16 +104,11 @@ const loginUser = async (req, res) => {
       maxAge: USER_COOKIE_EXPIRY,
     };
 
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
-      .json({
-        user: loggedInUser,
-        accessToken,
-        refreshToken,
-        message: "Login successfull.",
-      });
+    return res.status(200).cookie("refreshToken", refreshToken, options).json({
+      user: loggedInUser,
+      accessToken,
+      message: "Login successfull.",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -139,7 +134,6 @@ const logoutUser = async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json({ message: "User Logged Out." });
 };
@@ -175,15 +169,10 @@ const refreshAccessToken = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
   };
 
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", newRefreshToken, options)
-    .json({
-      accessToken,
-      refreshToken: newRefreshToken,
-      message: "Access token refreshed",
-    });
+  return res.status(200).cookie("refreshToken", newRefreshToken, options).json({
+    accessToken,
+    message: "Access token refreshed",
+  });
 };
 
 export { registerUser, loginUser, logoutUser, refreshAccessToken };

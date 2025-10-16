@@ -4,6 +4,7 @@ import express from "express";
 import userRouter from "./routes/user.route.js";
 import faceRouter from "./routes/face.route.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 dotenv.config();
 connectDB();
@@ -11,6 +12,12 @@ connectDB();
 const app = express();
 
 // Middleware
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));

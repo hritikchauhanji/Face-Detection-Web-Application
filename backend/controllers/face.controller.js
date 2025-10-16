@@ -13,7 +13,6 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Find user
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -24,7 +23,6 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ message: "Image local path not found" });
     }
 
-    // Upload to Cloudinary
     const image = await uploadOnCloudinary(imageLocalPath);
     if (!image.url) {
       return res
@@ -32,21 +30,33 @@ const uploadImage = async (req, res) => {
         .json({ message: "Error while uploading image to Cloudinary" });
     }
 
-    // Save image metadata to ImageHistory
+    // Parse detectionData if present (fix for "must be array" error)
+    const detectionData = req.body.detectionData
+      ? JSON.parse(req.body.detectionData)
+      : [];
+
+    const facesDetected = req.body.facesDetected
+      ? Number(req.body.facesDetected)
+      : 0;
+
     const imageHistory = await ImageHistory.create({
       user: user._id,
       image: image.url,
       publicId: image.public_id,
-      facesDetected: 0, // will update after face detection from frontend
-      detectionData: [], // will update after face detection from frontend
+      facesDetected,
+      detectionData,
     });
 
     res.status(200).json({
+      success: true,
       message: "Image uploaded successfully",
       imageHistory,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server error while uploading image",
+    });
   }
 };
 
