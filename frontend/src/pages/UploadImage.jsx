@@ -110,7 +110,7 @@ export default function UploadImagePage() {
 
   return (
     <Paper className="p-6 ">
-      <div className="grid md: grid-cols-2">
+      <div className="grid md:grid-cols-2">
         <Typography variant="h5" sx={{ mt: 2 }}>
           Upload Image (Local Storage)
         </Typography>

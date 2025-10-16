@@ -1,10 +1,13 @@
 import multer from "multer";
 import path from "path";
 
+const uploadPath =
+  process.env.NODE_ENV === "production" ? "/tmp" : "./public/temp";
+
 // Multer Setup
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./public/temp");
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + "-" + file.originalname);
