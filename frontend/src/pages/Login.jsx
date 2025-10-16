@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Paper, TextField, Button, Typography } from "@mui/material";
+import { Paper, TextField, Button, Typography, Link } from "@mui/material";
 import { loginUser } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +56,7 @@ export default function LoginPage() {
         <Typography variant="h5" sx={{ mb: 2 }} className="text-center">
           Sign In
         </Typography>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <TextField
             fullWidth
@@ -66,6 +67,7 @@ export default function LoginPage() {
             error={!!errors.email}
             helperText={errors.email || ""}
           />
+
           <TextField
             fullWidth
             label="Password"
@@ -74,10 +76,25 @@ export default function LoginPage() {
             value={form.password}
             onChange={handleChange}
           />
+
           <Button type="submit" variant="contained" disabled={loading}>
-            {loading ? "Logging..." : "Login"}
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
+        <Typography
+          sx={{ mt: 2 }}
+          className="text-center text-sm text-gray-600"
+        >
+          Don't have an account?{" "}
+          <Link
+            component="button"
+            variant="body2"
+            onClick={() => navigate("/register")}
+            sx={{ fontWeight: 500 }}
+          >
+            Register
+          </Link>
+        </Typography>
       </Paper>
     </motion.div>
   );

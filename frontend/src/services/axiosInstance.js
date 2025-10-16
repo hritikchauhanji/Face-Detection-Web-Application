@@ -1,6 +1,5 @@
 import axios from "axios";
 import { refreshToken } from "./authService";
-import { useAuth } from "../context/AuthContext";
 
 let authContextSetter = null;
 export const injectAuthSetter = (setter) => {
@@ -30,7 +29,6 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Ignore refresh for login and register requests
     if (
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/register")
@@ -45,13 +43,14 @@ axiosInstance.interceptors.response.use(
         refreshingTokenInProgress = false;
 
         if (response?.data?.accessToken) {
-          localStorage.setItem("accessToken", response.data.accessToken);
+          authContextSetter?.(response.data.accessToken);
+
           originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
           return axiosInstance(originalRequest);
         }
       } catch (err) {
         refreshingTokenInProgress = false;
-        removeTokens();
+        authContextSetter?.(null);
         window.location.href = "/login";
       }
     }

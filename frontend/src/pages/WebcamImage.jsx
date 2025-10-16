@@ -5,7 +5,7 @@ import * as faceapi from "face-api.js";
 import { uploadImage } from "../services/faceService";
 import { toast } from "react-toastify";
 
-export default function FaceDetectPage() {
+export default function WebcamImage() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -13,11 +13,11 @@ export default function FaceDetectPage() {
   const [resultImage, setResultImage] = useState(null);
   const [noFace, setNoFace] = useState(false);
   const [latestDetections, setLatestDetections] = useState([]);
+  const [webcamActive, setWebcamActive] = useState(false);
 
-  // 🧠 Load models once
   useEffect(() => {
     const loadModels = async () => {
-      const MODEL_URL = "/models"; // ensure /public/models contains model files
+      const MODEL_URL = "/models";
       try {
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -34,10 +34,9 @@ export default function FaceDetectPage() {
     loadModels();
   }, []);
 
-  // 🎥 Live detection (bounding boxes only)
   useEffect(() => {
     let interval;
-    if (modelsLoaded) {
+    if (modelsLoaded && webcamActive) {
       interval = setInterval(async () => {
         if (
           webcamRef.current &&
@@ -46,7 +45,6 @@ export default function FaceDetectPage() {
         ) {
           const video = webcamRef.current.video;
           const canvas = canvasRef.current;
-
           const displaySize = {
             width: video.videoWidth,
             height: video.videoHeight,
@@ -74,22 +72,26 @@ export default function FaceDetectPage() {
             detections,
             displaySize
           );
-
-          // draw bounding boxes only
           faceapi.draw.drawDetections(canvas, resizedDetections);
         }
       }, 200);
     }
-    return () => clearInterval(interval);
-  }, [modelsLoaded]);
 
-  // 📤 Capture + Upload (only if face detected)
+    return () => {
+      if (interval) clearInterval(interval);
+      const canvas = canvasRef.current;
+      if (canvas)
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      setNoFace(false);
+      setLatestDetections([]);
+    };
+  }, [modelsLoaded, webcamActive]);
+
   const captureAndUpload = async () => {
     if (!modelsLoaded) {
       toast.warning("Models still loading...");
       return;
     }
-
     if (latestDetections.length === 0) {
       toast.error("No face detected — image not saved!");
       return;
@@ -128,53 +130,77 @@ export default function FaceDetectPage() {
 
   return (
     <Paper className="p-6">
-      <Typography variant="h5" className="mb-4">
-        Face Detection (Live)
-      </Typography>
-
       <div className="grid md:grid-cols-2 gap-4">
-        {/* Webcam with bounding boxes */}
+        <Typography variant="h5" sx={{ mt: 2 }}>
+          Face Detection (Live)
+        </Typography>
+        <Typography variant="subtitle1" sx={{ mt: 2 }}>
+          Result
+        </Typography>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4 mt-4">
+        {/* Webcam section */}
         <div className="relative w-full">
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/jpeg"
-            className="rounded w-full"
-            videoConstraints={{ facingMode: "user" }}
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute top-0 left-0 w-full h-full"
-          />
-
-          {noFace && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white font-semibold text-lg">
-              No Face Detected
-            </div>
-          )}
-
-          <div className="mt-2">
+          {!webcamActive && (
             <Button
               variant="contained"
-              onClick={captureAndUpload}
-              disabled={processing || !modelsLoaded}
+              onClick={() => setWebcamActive(true)}
+              disabled={!modelsLoaded}
             >
-              {processing ? "Uploading..." : "Capture & Save"}
+              Start Webcam
             </Button>
-          </div>
+          )}
+
+          {webcamActive && (
+            <div className="relative">
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                screenshotFormat="image/jpeg"
+                className="rounded w-full"
+                videoConstraints={{ facingMode: "user" }}
+              />
+              <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full"
+              />
+
+              {noFace && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white font-semibold text-lg">
+                  No Face Detected
+                </div>
+              )}
+
+              <div className="mt-3 flex items-center gap-3">
+                <Button
+                  variant="contained"
+                  onClick={captureAndUpload}
+                  disabled={processing || !modelsLoaded}
+                >
+                  {processing ? "Uploading..." : "Capture & Save"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setWebcamActive(false)}
+                >
+                  Stop Webcam
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Uploaded image */}
         <div>
-          <Typography variant="subtitle1">Result</Typography>
           {resultImage ? (
             <img
               src={resultImage}
               alt="Result"
-              className="max-w-full rounded"
+              className="max-w-full rounded mt-14"
             />
           ) : (
-            <div className="text-gray-500">No result yet</div>
+            <div className="text-gray-500 mt-2">No result yet</div>
           )}
         </div>
       </div>

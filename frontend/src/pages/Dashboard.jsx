@@ -6,20 +6,25 @@ import {
   CardMedia,
   CardContent,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { getHistory, deleteImage } from "../services/faceService";
+import { toast } from "react-toastify";
 
 export default function DashboardPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetch = async () => {
     setLoading(true);
     try {
       const res = await getHistory();
       setHistory(res.data.history);
+      toast.success("History loaded successfully!");
     } catch (e) {
       console.error(e);
+      toast.error("Failed to load history!");
     } finally {
       setLoading(false);
     }
@@ -29,6 +34,20 @@ export default function DashboardPage() {
     fetch();
   }, []);
 
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    try {
+      await deleteImage(id);
+      toast.success("Image deleted successfully!");
+      fetch();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to delete image!");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div>
       <Typography variant="h4" className="mb-4">
@@ -36,18 +55,24 @@ export default function DashboardPage() {
       </Typography>
       {loading ? (
         <div>Loading...</div>
+      ) : history.length === 0 ? (
+        <div className="text-gray-500">No uploads yet</div>
       ) : (
         <Grid container spacing={2}>
           {history.map((item) => (
             <Grid item xs={12} sm={6} md={4} key={item._id}>
-              <Card>
+              <Card className="flex flex-col">
                 <CardMedia
                   component="img"
-                  height="200"
                   image={item.image}
                   alt="uploaded"
+                  sx={{
+                    width: "100%",
+                    height: 200,
+                    objectFit: "cover",
+                  }}
                 />
-                <CardContent>
+                <CardContent className="flex flex-col flex-1">
                   <Typography>Faces: {item.facesDetected}</Typography>
                   <Typography variant="caption">
                     {new Date(item.createdAt).toLocaleString()}
@@ -65,12 +90,14 @@ export default function DashboardPage() {
                       variant="contained"
                       size="small"
                       color="error"
-                      onClick={async () => {
-                        await deleteImage(item._id);
-                        fetch();
-                      }}
+                      onClick={() => handleDelete(item._id)}
+                      disabled={deletingId === item._id}
                     >
-                      Delete
+                      {deletingId === item._id ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        "Delete"
+                      )}
                     </Button>
                   </div>
                 </CardContent>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Paper, TextField, Button, Typography } from "@mui/material";
+import { Paper, TextField, Button, Typography, Link } from "@mui/material";
 import { registerUser } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -54,6 +54,7 @@ export default function RegisterPage() {
         <Typography variant="h5" sx={{ mb: 2 }} className="text-center">
           Create Account
         </Typography>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <TextField
             fullWidth
@@ -87,6 +88,20 @@ export default function RegisterPage() {
             {loading ? "Creating..." : "Register"}
           </Button>
         </form>
+        <Typography
+          sx={{ mt: 2 }}
+          className="text-center text-sm text-gray-600"
+        >
+          Already have an account?{" "}
+          <Link
+            component="button"
+            variant="body2"
+            onClick={() => navigate("/login")}
+            sx={{ fontWeight: 500 }}
+          >
+            Login
+          </Link>
+        </Typography>
       </Paper>
     </motion.div>
   );

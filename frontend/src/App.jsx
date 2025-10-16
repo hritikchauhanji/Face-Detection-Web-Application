@@ -9,9 +9,10 @@ import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import FaceDetect from "./pages/FaceDetect";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { injectAuthSetter } from "./services/axiosInstance";
+import UploadImage from "./pages/UploadImage";
+import WebcamImage from "./pages/WebcamImage";
 
 const theme = createTheme({
   palette: {
@@ -90,7 +91,15 @@ const AppContent = () => {
                 path="/detect"
                 element={
                   <Protected>
-                    <FaceDetect />
+                    <WebcamImage />
+                  </Protected>
+                }
+              />
+              <Route
+                path="/detect-local-image"
+                element={
+                  <Protected>
+                    <UploadImage />
                   </Protected>
                 }
               />
