@@ -6,6 +6,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
   deleteImage,
   getUploadHistory,
+  uploadAndDetectFacesbyOpenCV,
   uploadImage,
 } from "../controllers/face.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -40,6 +41,11 @@ router
     validate,
     uploadImage
   );
+
+// Save face detection by OpenCV
+router
+  .route("/upload-faces-opencv")
+  .post(verifyJWT, upload.single("image"), uploadAndDetectFacesbyOpenCV);
 
 // Get user's uploaded image history
 router.route("/history").get(verifyJWT, getUploadHistory);

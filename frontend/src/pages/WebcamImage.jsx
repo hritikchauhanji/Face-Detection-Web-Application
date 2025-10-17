@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { Button, Paper, Typography } from "@mui/material";
 import Webcam from "react-webcam";
 import * as faceapi from "face-api.js";
-import { uploadImage } from "../services/faceService";
+import { uploadImage, uploadImageWithOpenCV } from "../services/faceService"; // existing function for backend upload
 import { toast } from "react-toastify";
 
 export default function WebcamImage() {
@@ -11,10 +11,12 @@ export default function WebcamImage() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [resultImage, setResultImage] = useState(null);
+  const [opencvResult, setOpencvResult] = useState(null);
   const [noFace, setNoFace] = useState(false);
   const [latestDetections, setLatestDetections] = useState([]);
   const [webcamActive, setWebcamActive] = useState(false);
 
+  // Load face-api.js models
   useEffect(() => {
     const loadModels = async () => {
       const MODEL_URL = "/models";
@@ -25,15 +27,16 @@ export default function WebcamImage() {
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
         setModelsLoaded(true);
-        toast.success("Face detection models loaded!");
+        toast.success("Face-api.js models loaded!");
       } catch (err) {
         console.error(err);
-        toast.error("Error loading face detection models!");
+        toast.error("Error loading face-api models!");
       }
     };
     loadModels();
   }, []);
 
+  // Real-time detection loop
   useEffect(() => {
     let interval;
     if (modelsLoaded && webcamActive) {
@@ -74,7 +77,7 @@ export default function WebcamImage() {
           );
           faceapi.draw.drawDetections(canvas, resizedDetections);
         }
-      }, 200);
+      }, 250);
     }
 
     return () => {
@@ -87,13 +90,13 @@ export default function WebcamImage() {
     };
   }, [modelsLoaded, webcamActive]);
 
-  const captureAndUpload = async () => {
-    if (!modelsLoaded) {
-      toast.warning("Models still loading...");
-      return;
-    }
+  // -----------------------------
+  // CLIENT-SIDE (face-api.js)
+  // -----------------------------
+  const captureAndUploadFaceAPI = async () => {
+    if (!modelsLoaded) return toast.warning("Models still loading...");
     if (latestDetections.length === 0) {
-      toast.error("No face detected — image not saved!");
+      toast.error("No face detected!");
       return;
     }
 
@@ -106,7 +109,7 @@ export default function WebcamImage() {
       const blob = await res.blob();
 
       const formData = new FormData();
-      formData.append("image", blob, "capture.jpg");
+      formData.append("image", blob, "capture_faceapi.jpg");
       formData.append("facesDetected", latestDetections.length);
       formData.append(
         "detectionData",
@@ -118,11 +121,38 @@ export default function WebcamImage() {
       const response = await uploadImage(formData);
       setResultImage(response.data.imageHistory.image);
       toast.success(
-        `Image uploaded successfully! Faces detected: ${latestDetections.length}`
+        `Face-api.js upload success (${latestDetections.length} faces)`
       );
     } catch (err) {
       console.error(err);
-      toast.error("Error uploading image!");
+      toast.error("Face-api.js upload failed");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // -----------------------------
+  // SERVER-SIDE (OpenCV backend)
+  // -----------------------------
+  const captureAndUploadOpenCV = async () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return toast.warning("No image captured");
+
+    setProcessing(true);
+    try {
+      const res = await fetch(imageSrc);
+      const blob = await res.blob();
+
+      const formData = new FormData();
+      formData.append("image", blob, "capture_opencv.jpg");
+
+      // Hit your backend OpenCV route (e.g. /api/face/upload)
+      const response = await uploadImageWithOpenCV(formData);
+      setOpencvResult(response.data.imageHistory.image);
+      toast.success("Processed by OpenCV backend!");
+    } catch (err) {
+      console.error(err);
+      toast.error("OpenCV upload failed");
     } finally {
       setProcessing(false);
     }
@@ -132,15 +162,15 @@ export default function WebcamImage() {
     <Paper className="p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <Typography variant="h5" sx={{ mt: 2 }}>
-          Face Detection (Live)
+          Live Face Detection
         </Typography>
         <Typography variant="subtitle1" sx={{ mt: 2 }}>
-          Result
+          Results
         </Typography>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mt-4">
-        {/* Webcam section */}
+        {/* Webcam view */}
         <div className="relative w-full">
           {!webcamActive && (
             <Button
@@ -172,18 +202,34 @@ export default function WebcamImage() {
                 </div>
               )}
 
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-3 flex items-center gap-3 flex-wrap">
+                {/* Face API client-side */}
                 <Button
                   variant="contained"
-                  onClick={captureAndUpload}
+                  onClick={captureAndUploadFaceAPI}
                   disabled={processing || !modelsLoaded}
                 >
-                  {processing ? "Uploading..." : "Capture & Save"}
+                  {processing ? "Processing..." : "Detect (face-api.js)"}
                 </Button>
+
+                {/* OpenCV backend */}
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={captureAndUploadOpenCV}
+                  disabled={processing}
+                >
+                  {processing ? "Processing..." : "Detect (OpenCV API)"}
+                </Button>
+
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={() => setWebcamActive(false)}
+                  onClick={() => {
+                    setWebcamActive(false);
+                    setResultImage(null);
+                    setOpencvResult(null);
+                  }}
                 >
                   Stop Webcam
                 </Button>
@@ -192,15 +238,32 @@ export default function WebcamImage() {
           )}
         </div>
 
-        <div>
-          {resultImage ? (
-            <img
-              src={resultImage}
-              alt="Result"
-              className="max-w-full rounded mt-14"
-            />
-          ) : (
-            <div className="text-gray-500 mt-2">No result yet</div>
+        {/* Result panel */}
+        <div className="flex flex-col items-center">
+          {resultImage && (
+            <div>
+              <Typography className="mt-2">face-api.js Result</Typography>
+              <img
+                src={resultImage}
+                alt="face-api result"
+                className="max-w-full rounded mt-2 shadow"
+              />
+            </div>
+          )}
+
+          {opencvResult && (
+            <div>
+              <Typography className="mt-6">OpenCV Backend Result</Typography>
+              <img
+                src={opencvResult}
+                alt="opencv result"
+                className="max-w-full rounded mt-2 shadow"
+              />
+            </div>
+          )}
+
+          {!resultImage && !opencvResult && (
+            <div className="text-gray-500 mt-10">No result yet</div>
           )}
         </div>
       </div>

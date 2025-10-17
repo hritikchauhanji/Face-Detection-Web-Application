@@ -6,6 +6,12 @@ export const uploadImage = async (formData) => {
   });
 };
 
+export const uploadImageWithOpenCV = async (formData) => {
+  return await axiosInstance.post("/face/upload-faces-opencv", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
 export const getHistory = async () => {
   return await axiosInstance.get("/face/history");
 };
