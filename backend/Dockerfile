@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libopencv-dev \
     python3 \
+    git \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and package-lock.json
