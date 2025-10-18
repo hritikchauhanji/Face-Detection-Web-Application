@@ -1,10 +1,6 @@
-# Use official Node.js LTS image (Node 20)
-FROM node:20-bullseye
+FROM node:22-bullseye
 
-# Set working directory
-WORKDIR /usr/src/app
-
-# Install system dependencies for OpenCV
+# Install OS dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -21,24 +17,16 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-dev \
     libatlas-base-dev \
     gfortran \
-    python3 \
-    git \
-    wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+    python3
 
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm install
+# Install opencv4nodejs (builds from source)
+RUN npm install --unsafe-perm
 
-# Copy the rest of the project
 COPY . .
 
-# Expose port
-EXPOSE 3000
-
-# Start the server
+EXPOSE 5000
 CMD ["npm", "start"]
