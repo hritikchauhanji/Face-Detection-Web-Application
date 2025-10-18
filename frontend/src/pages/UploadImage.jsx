@@ -15,7 +15,7 @@ export default function UploadImagePage() {
   const [opencvResult, setOpencvResult] = useState(null);
   const [noFace, setNoFace] = useState(false);
 
-  // Load face-api.js models once
+  // Load face-api.js models
   useEffect(() => {
     const loadModels = async () => {
       const MODEL_URL = "/models";

@@ -90,9 +90,7 @@ export default function WebcamImage() {
     };
   }, [modelsLoaded, webcamActive]);
 
-  // -----------------------------
-  // CLIENT-SIDE (face-api.js)
-  // -----------------------------
+  // face-api.js
   const captureAndUploadFaceAPI = async () => {
     if (!modelsLoaded) return toast.warning("Models still loading...");
     if (latestDetections.length === 0) {
@@ -131,9 +129,7 @@ export default function WebcamImage() {
     }
   };
 
-  // -----------------------------
-  // SERVER-SIDE (OpenCV backend)
-  // -----------------------------
+  // OpenCV backend
   const captureAndUploadOpenCV = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return toast.warning("No image captured");
@@ -146,7 +142,7 @@ export default function WebcamImage() {
       const formData = new FormData();
       formData.append("image", blob, "capture_opencv.jpg");
 
-      // Hit your backend OpenCV route (e.g. /api/face/upload)
+      // Hit your backend OpenCV route
       const response = await uploadImageWithOpenCV(formData);
       setOpencvResult(response.data.imageHistory.image);
       toast.success("Processed by OpenCV backend!");
@@ -170,7 +166,6 @@ export default function WebcamImage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mt-4">
-        {/* Webcam view */}
         <div className="relative w-full">
           {!webcamActive && (
             <Button
@@ -203,7 +198,6 @@ export default function WebcamImage() {
               )}
 
               <div className="mt-3 flex items-center gap-3 flex-wrap">
-                {/* Face API client-side */}
                 <Button
                   variant="contained"
                   onClick={captureAndUploadFaceAPI}
@@ -212,7 +206,6 @@ export default function WebcamImage() {
                   {processing ? "Processing..." : "Detect (face-api.js)"}
                 </Button>
 
-                {/* OpenCV backend */}
                 <Button
                   variant="outlined"
                   color="secondary"
@@ -238,7 +231,6 @@ export default function WebcamImage() {
           )}
         </div>
 
-        {/* Result panel */}
         <div className="flex flex-col items-center">
           {resultImage && (
             <div>
