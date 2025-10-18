@@ -9,12 +9,24 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     pkg-config \
-    libopencv-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libv4l-dev \
+    libxvidcore-dev \
+    libx264-dev \
+    libgtk-3-dev \
+    libatlas-base-dev \
+    gfortran \
     python3 \
     git \
     wget \
     unzip \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
