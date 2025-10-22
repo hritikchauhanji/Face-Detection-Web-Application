@@ -5,7 +5,7 @@ A full-stack web application for authenticated face detection and user image his
 ## Features
 - User registration and login with JWT authentication
 - Upload images and run face detection (frontend or backend)
-- History page to view, delete, or download image detection results
+- History page to view or delete image detection results
 - Uses Cloudinary for image storage and MongoDB Atlas for data persistence
 - Responsive React frontend with Material UI and Tailwind CSS
 - Dockerized backend, ready for cloud deployment
