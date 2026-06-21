@@ -14,6 +14,7 @@ export default function UploadImagePage() {
   const [resultImage, setResultImage] = useState(null);
   const [opencvResult, setOpencvResult] = useState(null);
   const [noFace, setNoFace] = useState(false);
+  const [imageElement, setImageElement] = useState(null);
 
   // Load face-api.js models
   useEffect(() => {
@@ -35,6 +36,12 @@ export default function UploadImagePage() {
     loadModels();
   }, []);
 
+  useEffect(() => {
+    if (uploadedImage && imageElement && canvasRef.current) {
+      drawAndDetectFace(imageElement);
+    }
+  }, [uploadedImage, imageElement]);
+
   // Handle image file upload
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -44,9 +51,9 @@ export default function UploadImagePage() {
     reader.onload = async () => {
       const img = new Image();
       img.src = reader.result;
-      img.onload = async () => {
+      img.onload = () => {
         setUploadedImage(reader.result);
-        drawAndDetectFace(img);
+        setImageElement(img);
       };
     };
     reader.readAsDataURL(file);

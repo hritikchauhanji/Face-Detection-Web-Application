@@ -5,7 +5,7 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
-import cv from "opencv4nodejs";
+import cv from "@u4/opencv4nodejs";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
