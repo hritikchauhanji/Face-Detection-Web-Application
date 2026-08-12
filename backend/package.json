@@ -25,5 +25,10 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "opencv4nodejs": {
+    "disableAutoBuild": 1,
+    "opencvIncludeDir": "/usr/include/opencv4",
+    "opencvLibDir": "/usr/lib/x86_64-linux-gnu"
   }
 }
