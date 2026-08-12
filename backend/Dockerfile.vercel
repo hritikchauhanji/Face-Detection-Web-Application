@@ -2,6 +2,7 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
@@ -10,21 +11,28 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js 20
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY backend/package*.json ./
+# Copy backend package files
+COPY package*.json ./
 
+# Install dependencies without rebuilding OpenCV
 RUN npm ci --ignore-scripts
 
-COPY backend/ .
+# Copy backend source
+COPY . .
 
-COPY backend/native/opencv4nodejs.node \
-     /app/node_modules/@u4/opencv4nodejs/build/Release/opencv4nodejs.node
+# Copy the native OpenCV module built locally
+COPY native/opencv4nodejs.node \
+    /app/node_modules/@u4/opencv4nodejs/build/Release/opencv4nodejs.node
 
 ENV NODE_ENV=production
+
+EXPOSE 3000
 
 CMD ["npm", "start"]
