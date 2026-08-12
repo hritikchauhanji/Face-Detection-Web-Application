@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "vercel-build": "npm install --ignore-scripts"
+    "dev": "nodemon server.js"
   },
   "author": "Hritik Chauhan",
   "license": "ISC",

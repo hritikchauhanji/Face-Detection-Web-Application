@@ -1,21 +1,16 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "native/opencv4nodejs.node",
-          "cascades/haarcascade_frontalface_default.xml"
-        ]
-      }
+  "services": {
+    "backend": {
+      "root": "backend/",
+      "entrypoint": "Dockerfile.vercel"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "server.js"
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "backend"
+      }
     }
   ]
 }
