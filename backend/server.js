@@ -25,6 +25,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+
+// Server is running
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Face Detection Backend is running",
+  });
+});
+
 // Health Check Route
 app.get("/api/v1/health", (req, res) => {
   res.status(200).json({
