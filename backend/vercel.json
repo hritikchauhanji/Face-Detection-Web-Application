@@ -3,7 +3,13 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "native/opencv4nodejs.node",
+          "cascades/haarcascade_frontalface_default.xml"
+        ]
+      }
     }
   ],
   "routes": [
