@@ -1,13 +1,13 @@
 {
   "services": {
     "backend": {
-      "root": "/",
+      "root": "./",
       "entrypoint": "Dockerfile.vercel"
     }
   },
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "destination": {
         "service": "backend"
       }
